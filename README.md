@@ -48,7 +48,10 @@ it is not selected automatically. Quit and reopen DSH once.
 3. Choose **Load unpacked** and select this repository's `edge-bridge/` folder.
 4. Keep a `https://platform.deepseek.com/usage` tab open while using the
    dashboard. If the tab was already open, reload it once after loading the
-   extension.
+   extension. The Host also tries to maintain this context automatically:
+   if Edge is not running, DSH starts it with background throttling disabled
+   and hides the app; if Edge is already running, DSH opens a background
+   Platform tab.
 5. Return to DSH. Within about one sync cycle the badge changes to `官方`.
 
 The extension runs only on `platform.deepseek.com` and posts only to
@@ -82,7 +85,8 @@ windows (maximum 48 windows, covering four years), caches each window in
 a preliminary snapshot immediately followed by progressively completed
 all-time snapshots. This avoids the Platform's monthly aggregate endpoints,
 which are the ones the WAF repeatedly challenged. The dashboard polls the Host
-every 15 seconds.
+every **5 seconds**; official Platform data itself is fetched about every 30
+seconds to stay clear of the WAF and the Platform's own update cadence.
 
 If the bridge is not connected, the panel shows the installation instruction and
 the bar uses local DSH values. The local plane is never removed.
@@ -114,7 +118,7 @@ the bar uses local DSH values. The local plane is never removed.
 - `node --check` covers every JavaScript file.
 - `test/client-smoke.mjs` executes the real browser factory with official,
   local, balance, and provider fixtures; it confirms both slot registrations,
-  the style lifetime, the 15-second refresh timer, the official/local bar,
+  the style lifetime, the 5-second refresh timer, the official/local bar,
   expanded API-key and model rows, and the collapsed launcher.
 - `test/extension-smoke.mjs` runs the real bridge content script against a
   mocked Platform page and asserts all-time aggregation, today's values, API key

@@ -14,7 +14,8 @@ browser is the only reliable place to fetch this data.
 1. Open `edge://extensions` in Microsoft Edge.
 2. Enable **Developer mode**.
 3. Choose **Load unpacked** and select this `edge-bridge` folder.
-4. Keep a `https://platform.deepseek.com/usage` tab open. The extension polls the
+4. Keep a `https://platform.deepseek.com/usage` tab open, or let DSH create the
+   hidden/background Edge context automatically. The extension polls the
    current 30-day window every 30 seconds. It walks backward in consecutive
    30-day windows for the all-time history, retries WAF challenges with
    exponential backoff, and posts progressive snapshots while the scan runs.

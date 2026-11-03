@@ -8,7 +8,7 @@ window.__ModuleLoader__.load({
     const NS = 'tokenUsageDashboard';
     const SETTINGS_KEY = 'dsh.token-usage-dashboard.v1';
     const USAGE_ROUTE = 'api/token-usage-dashboard';
-    const USAGE_REFRESH_MS = 15_000;
+    const USAGE_REFRESH_MS = 5_000;
     const PLATFORM_URL = 'https://platform.deepseek.com/usage';
 
     const zh = {

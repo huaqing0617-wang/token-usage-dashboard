@@ -7,6 +7,8 @@
  * browser half never reads Session logs; it only renders this snapshot.
  */
 
+import { execFile, spawn } from 'node:child_process';
+import { promisify } from 'node:util';
 import { UsageAggregator } from './usage.js';
 import { startBridge } from './bridge.js';
 
@@ -16,6 +18,9 @@ const ROUTE_READY_TIMEOUT_MS = 6000;
 const BALANCE_CACHE_MS = 60000;
 const PROVIDERS_CACHE_MS = 120000;
 const OFFICIAL_STALE_MS = 2 * 60000;
+const EDGE_BIN = '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
+const PLATFORM_USAGE_URL = 'https://platform.deepseek.com/usage';
+const execFileAsync = promisify(execFile);
 
 /** Services required before the route can be registered and the scan can start. */
 export const inject = ['connection', 'sessionQuery'];
@@ -44,6 +49,60 @@ export function apply(ctx) {
   let balanceCache = { at: 0, value: null, error: null };
   let balanceInflight;
   let providersCache = { at: 0, value: null, error: null };
+  let officialLaunchAttempted = false;
+
+  /** Keep the Edge content-script context available without requiring a manual launch. */
+  const ensureOfficialBrowser = async () => {
+    if (process.platform !== 'darwin' || officialLaunchAttempted) return;
+    if (officialSnapshot !== null && Date.now() - officialSnapshot.receivedAt < OFFICIAL_STALE_MS) return;
+    officialLaunchAttempted = true;
+    let running = false;
+    try {
+      await execFileAsync('pgrep', ['-x', 'Microsoft Edge']);
+      running = true;
+    } catch {
+      running = false;
+    }
+    try {
+      if (running) {
+        // User already has Edge open. Open a background tab without activating
+        // the app; do not hide the user's existing browser.
+        await execFileAsync('open', ['-g', '-a', 'Microsoft Edge', PLATFORM_USAGE_URL]);
+      } else {
+        // DSH owns this launch, so start Edge with background throttling off
+        // and hide the app after its Platform page has loaded.
+        const child = spawn(
+          EDGE_BIN,
+          [
+            '--disable-background-timer-throttling',
+            '--disable-renderer-backgrounding',
+            '--disable-backgrounding-occluded-windows',
+            '--no-first-run',
+            PLATFORM_USAGE_URL,
+          ],
+          { detached: true, stdio: 'ignore' },
+        );
+        child.unref();
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+        await execFileAsync('osascript', [
+          '-e',
+          'tell application "System Events" to set visible of process "Microsoft Edge" to false',
+        ]);
+      }
+    } catch (error) {
+      logger?.warn?.(`token-usage-dashboard: could not start the background Platform browser: ${String(error)}`);
+    }
+  };
+
+  ctx.effect(
+    () => {
+      const timer = setTimeout(() => {
+        if (officialSnapshot === null) void ensureOfficialBrowser();
+      }, 35000);
+      return () => clearTimeout(timer);
+    },
+    'token-usage-dashboard: automatic official browser',
+  );
 
   /** Start the loopback ingest used by the Edge bridge extension. */
   ctx.effect(
