@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a reproducible defect in the dashboard, bridge, or extension.
+title: "[bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include API keys, Platform tokens, cookies, or wallet balances.
+        Redact hostnames, account identifiers, and Session content as needed.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What failed, and where?
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - DSH Host plugin
+        - Browser footer or details
+        - Local Session aggregation
+        - Loopback bridge
+        - Edge extension / official usage
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction
+      description: Minimal ordered steps.
+      placeholder: |
+        1. Open ...
+        2. Install ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: macOS version, DSH version, Edge version, extension commit.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted diagnostics
+      description: Remove credentials, tokens, cookies, and private paths.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I removed secrets, tokens, cookies, and private data from this report.
+          required: true
+        - label: I checked the existing issues and documentation.
+          required: true

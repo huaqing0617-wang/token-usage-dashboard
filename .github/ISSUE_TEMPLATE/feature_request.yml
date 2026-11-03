@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a scoped capability or documentation improvement.
+title: "[feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user need is not met today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Keep it bounded to this project and its data boundaries.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Official Platform collection
+        - Local DSH aggregation
+        - Dashboard UI
+        - Browser bridge / extension
+        - Documentation
+        - Testing
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Data boundaries
+      options:
+        - label: The proposal does not require committing credentials or private usage data.
+          required: true

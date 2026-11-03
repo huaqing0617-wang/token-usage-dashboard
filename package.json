@@ -28,7 +28,12 @@
     "edge-bridge/icon48.png",
     "edge-bridge/icon128.png",
     "LICENSE",
-    ".gitignore"
+    ".gitignore",
+    "docs/*.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/ISSUE_TEMPLATE/*.yml"
   ],
   "dsh": {
     "bundle": {
@@ -51,6 +56,15 @@
   },
   "scripts": {
     "check": "node --check index.js && node --check client.js && node --check usage.js && node --check pricing.js && node --check bridge.js && node --check edge-bridge/content.js",
-    "test": "node test/bridge.test.mjs && node test/extension-smoke.mjs && node test/client-smoke.mjs"
-  }
+    "test": "npm run check && node test/bridge.test.mjs && node test/extension-smoke.mjs && node test/client-smoke.mjs"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "token-usage",
+    "usage-dashboard",
+    "edge-extension"
+  ],
+  "author": "Mingze Wang (huaqing0617-wang)"
 }

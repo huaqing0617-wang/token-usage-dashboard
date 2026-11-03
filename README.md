@@ -1,158 +1,198 @@
 # Token Usage Dashboard
 
-A persistent DeepSeek Harness UI plugin with two data planes:
+[![License: MIT](https://img.shields.io/github/license/huaqing0617-wang/token-usage-dashboard?style=flat-square)](LICENSE)
+[![Node 24](https://img.shields.io/badge/node-%3E%3D24-339933?style=flat-square&logo=nodedotjs&logoColor=white)](package.json)
+[![macOS + Edge](https://img.shields.io/badge/platform-macOS%20%2B%20Edge-000000?style=flat-square&logo=apple&logoColor=white)](docs/architecture.md)
 
-- **Official DeepSeek Platform** — every API key on the account, every device,
-  all recorded time, with request counts, spend, balance, API keys, and models.
-- **Local DSH** — this machine's Session logs and USD list-price estimate.
+Official and local DeepSeek usage, spend, balance, API keys, and models in a persistent DeepSeek Harness footer.
 
-The official plane is fed by a small Edge bridge extension because DeepSeek's
-private usage endpoints are protected by an AWS WAF JavaScript challenge. A Node
-plugin cannot pass that challenge from a saved token; the browser page can.
+## Overview
 
-## Where it appears
+Token Usage Dashboard adds a full-width status bar to DeepSeek Harness and keeps
+two independent accounts of model usage:
 
-- The status bar occupies the full-width `shell.bottom` seat below the columns
-  and stays visible across Chat, Files, Plugins, and other main panels.
-- The bar shows today's tokens/spend, balance, all-time spend/tokens, and the
-  connected API/model count. It prefers official data and shows a `官方` badge;
-  before the bridge is connected it falls back to `本机`.
-- **详情** expands an in-flow panel with:
-  - official today/all-time cards, request counts, balance, API key count, and
-    all-time model usage;
-  - per-API-key usage aggregated over all time;
-  - the local DSH today/lifetime breakdown and its provider/model registry.
-- **常驻** hides the full bar and leaves a compact bottom-right pill; the choice
-  persists in `localStorage`.
+- **Official Platform** — the DeepSeek Platform ledger across every API key and
+  device on the account, including request counts, spend, balance, per-key
+  usage, and model totals.
+- **Local DSH** — this machine's durable Session logs and a USD list-price
+  estimate, including the local provider and model registry.
 
-## Install / activate
+The official view is fed by a small Edge content script. DeepSeek's Platform
+usage endpoints are protected by an AWS WAF JavaScript challenge; a valid saved
+token still receives `202 x-amzn-waf-action: challenge`. The bridge runs the
+request inside the signed-in Platform page, where the browser has already solved
+the challenge, and posts only the resulting metrics to a loopback Host route.
 
-This repository is a local DSH bundle plus a companion Edge extension. It is not
-published to npm.
+> **Status: active prototype.** The official bridge and badge were verified live
+> on 2026-11-03. The clean-cycle hidden-Edge launch and the post-reload
+> completion of the all-time scan still need an independent live check. See
+> [Verification](docs/verification.md).
 
-### 1. Install the DSH bundle from this checkout
+## Architecture
 
-From the repository root:
+```mermaid
+flowchart LR
+  subgraph DSH[DeepSeek Harness - macOS]
+    UI["Footer and details panel"]
+    Route["Authenticated usage route"]
+    Host["Host plugin"]
+    Local["Local Session scanner"]
+    Bridge["Loopback bridge<br/>127.0.0.1:17654"]
+    KeyBalance["API-key balance"]
+  end
+
+  subgraph Edge[Microsoft Edge - hidden or background]
+    Ext["Bridge content script"]
+  end
+
+  Platform["DeepSeek Platform<br/>private usage endpoints"]
+  Public["DeepSeek public<br/>/user/balance"]
+
+  Local --> Host
+  Host --> Route --> UI
+  Ext -->|"fetch in page context"| Platform
+  Ext -->|"POST snapshot"| Bridge --> Host
+  Host --> KeyBalance --> Public
+  Host -->|"start / ensure"| Ext
+```
+
+The official and local planes are deliberately separate: the footer prefers the
+official ledger when the bridge is fresh and falls back to local DSH values
+otherwise. See [Architecture](docs/architecture.md) for the endpoint and failure
+model.
+
+## Capabilities
+
+- Persistent `shell.bottom` footer with today's tokens/spend, balance, all-time
+  spend/tokens, and the connected API/model count.
+- Expandable details for official today/all-time totals, request counts,
+  per-key usage, all-time model usage, balance, and the local DSH breakdown.
+- Official bridge refreshes current usage about every 30 seconds; the Host UI
+  polls every 5 seconds. All-time history is collected in consecutive 30-day
+  windows and filled progressively.
+- Balance fallback through the Harness credential service and the public
+  DeepSeek `/user/balance` endpoint when the bridge is unavailable.
+- Always-on switch persisted in browser `localStorage`; the collapsed state
+  leaves a compact launcher.
+- On macOS, the Host attempts to maintain the Edge context automatically: it
+  starts a hidden Edge with background throttling disabled when Edge is not
+  running, or opens a background Platform tab when Edge is already open.
+
+## Quick Start
+
+### Prerequisites
+
+- macOS with DeepSeek Harness desktop. Tested with `0.2.1-rc.5`.
+- Microsoft Edge, signed in to `https://platform.deepseek.com`.
+- One-time Edge extension installation.
+- Node.js 24 only for the test suite; the runtime uses the Harness runtime.
+
+### Install the DSH bundle
+
+From this checkout:
 
 ```bash
+git clone https://github.com/huaqing0617-wang/token-usage-dashboard.git
+cd token-usage-dashboard
 dsh plugin --profile desktop add "link:$PWD"
 ```
 
-Approve the package entry if the DSH prompt asks, then select the new bundle if
-it is not selected automatically. Quit and reopen DSH once.
+Select the new bundle in the DSH plugin manager if it is not selected
+automatically, then restart the DSH window once.
 
-### 2. One-time Edge bridge installation
+### Install the Edge bridge once
 
-1. Open `edge://extensions` in Microsoft Edge.
+1. Open `edge://extensions`.
 2. Enable **Developer mode**.
-3. Choose **Load unpacked** and select this repository's `edge-bridge/` folder.
-4. Keep a `https://platform.deepseek.com/usage` tab open while using the
-   dashboard. If the tab was already open, reload it once after loading the
-   extension. The Host also tries to maintain this context automatically:
-   if Edge is not running, DSH starts it with background throttling disabled
-   and hides the app; if Edge is already running, DSH opens a background
-   Platform tab.
-5. Return to DSH. Within about one sync cycle the badge changes to `官方`.
+3. Choose **Load unpacked** and select the `edge-bridge/` directory in this
+   checkout.
+4. Reload the `https://platform.deepseek.com/usage` tab once.
+5. Restart DSH. The footer should move from `Local` to `Official` within one
+   sync cycle.
 
 The extension runs only on `platform.deepseek.com` and posts only to
-`127.0.0.1:17654` with a local bridge token. It never exports the browser
-credential to another server. The token is a loopback ingest gate, not a
-GitHub or DeepSeek secret.
+`127.0.0.1:17654`. It does not export cookies or the Platform user token to
+another server.
 
-### 3. Restart DSH after changing code
+## Repository Map
 
-The desktop shell does not hot-add a new browser bundle to an already-open
-window. Quit and reopen DeepSeek Harness once after installation or an update:
-
-```bash
-osascript -e 'quit app "DeepSeek Harness"' && sleep 1 && open -a "DeepSeek Harness"
-```
-
-## How the official numbers are produced
-
-The bridge content script runs in the signed-in Platform page, so its requests
-carry the platform cookies and pass the AWS WAF challenge:
-
-- `GET /api/v0/users/get_user_summary` — balance wallets.
-- `GET /api/v0/usage/by_api_key/amount` and `/cost` with a 30-day window —
-  per-key tokens, requests, and spend for the current window.
-- `GET /api/v0/usage/by_api_key/amount` and `/cost` for consecutive 30-day
-  windows — all-time totals, per-key totals, model totals, and request counts.
-
-The extension walks backward in **30-day windows** until it sees three empty
-windows (maximum 48 windows, covering four years), caches each window in
-`chrome.storage.local`, refreshes the current window every 30 seconds, and posts
-a preliminary snapshot immediately followed by progressively completed
-all-time snapshots. This avoids the Platform's monthly aggregate endpoints,
-which are the ones the WAF repeatedly challenged. The dashboard polls the Host
-every **5 seconds**; official Platform data itself is fetched about every 30
-seconds to stay clear of the WAF and the Platform's own update cadence.
-
-If the bridge is not connected, the panel shows the installation instruction and
-the bar uses local DSH values. The local plane is never removed.
-
-## Balance and model providers
-
-- Balance prefers the bridge's Platform summary. Without the bridge, the Host
-  resolves `DEEPSEEK_API_KEY` through the Harness credential service and calls
-  the public `https://api.deepseek.com/user/balance` endpoint. That path is
-  verified to return the current CN¥ balance.
-- Provider/model rows come from the Host `ctx.llm` registry, not the browser
-  Remote that previously failed. The live check returned two providers and four
-  models (`deepseek-official`: flash/pro; `bananaclwd`: two Claude routes).
-
-## Data scope and caveats
-
-- Official values are the Platform account ledger across **all API keys**, not
-  just DSH. The current 30-day Platform page may show fewer or more rows than
-  the all-time window aggregation because the page's range control is 30 days.
-- Per-key rows and all-time totals come from the same consecutive 30-day
-  windows and cover the full scan range.
-- Local spend is a USD estimate at DeepSeek list prices and excludes
-  Search/Fetch per-request fees. Local tokens exclude fork-inherited events.
-- Official spend is in the Platform's currency (CNY for this account), not a
-  converted estimate.
+| Path | Role |
+|---|---|
+| `index.js` | Host plugin: local scan, live event ingest, API-key balance, Host model registry, bridge state, authenticated route |
+| `client.js` | Browser UI: footer, official/local details, always-on switch, styles |
+| `usage.js` | Local token accounting, inherited-event exclusion, day buckets |
+| `pricing.js` | Local USD estimate, peak/off-peak rule, 2026 holiday table |
+| `bridge.js` | Loopback ingest server and snapshot validation |
+| `edge-bridge/` | Manifest V3 Edge extension |
+| `edge-bridge/content.js` | Current-window and all-time 30-day-window collector, balance, bridge POST |
+| `docs/architecture.md` | Data flow, endpoints, failure states, automatic Edge lifecycle |
+| `docs/verification.md` | Test matrix, live evidence, and unverified paths |
+| `SECURITY.md` | Data boundaries and private vulnerability reporting |
+| `CONTRIBUTING.md` | Contribution and local-verification expectations |
+| `test/` | Node smoke tests for the client, extension, and bridge |
 
 ## Verification
 
-- `node --check` covers every JavaScript file.
-- `test/client-smoke.mjs` executes the real browser factory with official,
-  local, balance, and provider fixtures; it confirms both slot registrations,
-  the style lifetime, the 5-second refresh timer, the official/local bar,
-  expanded API-key and model rows, and the collapsed launcher.
-- `test/extension-smoke.mjs` runs the real bridge content script against a
-  mocked Platform page and asserts all-time aggregation, today's values, API key
-  count, model rows, balance, and the bridge POST.
-- `test/bridge.test.mjs` verifies token gating, CORS/private-network preflight,
-  and snapshot normalization.
-- Live checks:
-  - `GET /api/v0/users/get_user_summary` through the Edge profile returned the
-    valid account session; the WAF challenge on the usage endpoints was
-    confirmed as the reason a Node-only integration is insufficient.
-  - The Host API-key balance path returned a live CN¥ balance.
-  - Host provider discovery returned **2 providers / 4 models, 0 failures**.
-  - A bridge POST to `127.0.0.1:17654` returned **204**.
-  - The Edge extension was loaded live and the dashboard badge switched to
-    **官方**. Its first all-time attempt used monthly endpoints and received
-    WAF challenges for older months; the collector was changed to consecutive
-    30-day by-key windows, which use the endpoint already proven live.
-- The extension logic, including the new window collector and progressive
-  snapshots, is covered by `test/extension-smoke.mjs`.
+```bash
+npm test
+```
 
-## Files
+The suite currently covers syntax checks, the browser plugin factory and both
+slot registrations, the 5-second UI refresh, official/local rendering, the
+collapsed launcher, the bridge token/CORS/normalization path, and the
+extension's current-window plus rolling all-time aggregation.
 
-| File | Role |
-|---|---|
-| `index.js` | Host plugin: local scan, live ingest, API-key balance, host provider registry, bridge state, authenticated usage route |
-| `client.js` | Browser UI, official/local data presentation, details, toggle, styles |
-| `usage.js` | Local token accounting and day bucketing |
-| `pricing.js` | Local USD estimate, peak/off-peak rule, holiday table |
-| `bridge.js` | Loopback ingest server for the browser bridge |
-| `edge-bridge/` | Manifest V3 Edge extension (content script) |
-| `edge-bridge/content.js` | All-time 30-day window scan, current key usage, balance, POST to bridge |
-| `test/` | Client, extension, and bridge smoke tests |
+Live evidence, commands, and the items that remain unverified are recorded in
+[docs/verification.md](docs/verification.md). In particular:
 
-## Sources
+- The official bridge and badge were observed live.
+- The private monthly endpoints were WAF-challenged; the collector now uses the
+  already-proven consecutive 30-day by-key endpoint.
+- No GitHub Actions workflow is included, so there is no CI badge or claim.
+- A clean Edge-closed auto-start cycle has not been independently repeated.
+
+## Limitations and Roadmap
+
+- **Edge remains required.** DSH can start or background it, but the Platform
+  WAF context is a browser context. A pure DSH-only implementation would need an
+  embedded browser layer and is not part of this version.
+- **Private endpoints.** The Platform usage API is not a documented public API;
+  its responses may change. The collector fails closed to local data.
+- **Update cadence.** The UI polls every 5 seconds, but official Platform data is
+  fetched about every 30 seconds. Five-second Platform polling is intentionally
+  not used because it is more likely to trigger the WAF and exceed the
+  Platform's own update cadence.
+- **All-time scan.** History is assembled from consecutive 30-day windows,
+  stopping after three empty windows (maximum 48 windows). The first scan may
+  take minutes and is shown as a syncing notice.
+- **macOS only auto-start.** The automatic hidden-Edge launch is a macOS Host
+  path. Other shells can still use the extension and a manually managed
+  Platform tab.
+- **No CI workflow.** Tests are reproducible locally; no workflow has been
+  executed.
+
+## Contributing
+
+Open an issue before changing a data source or the official collector, then run
+`npm test`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the scope and security
+checklist.
+
+## Security
+
+Browser credentials stay in the Platform page. The bridge accepts only
+loopback traffic with a local ingest token, and the Host never exposes the
+Platform token to the client. See [SECURITY.md](SECURITY.md) for data boundaries
+and vulnerability reporting.
+
+## License and Acknowledgements
+
+Released under the [MIT License](LICENSE).
+
+DeepSeek Harness and DeepSeek Platform are products of DeepSeek. This project is
+not affiliated with or endorsed by DeepSeek. It relies on private Platform
+dashboard endpoints that may change without notice.
+
+References:
 
 - [DeepSeek Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing/)
 - [Get User Balance](https://api-docs.deepseek.com/api/get-user-balance/)
