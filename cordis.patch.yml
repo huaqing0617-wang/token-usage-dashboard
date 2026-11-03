@@ -1,0 +1,5 @@
+# The dashboard has one package root serving both halves:
+# the Host route that folds Session token usage, and the browser status bar.
+- insert:
+    - id: token-usage-dashboard
+      name: '@huaqing/dsh-token-usage-dashboard'

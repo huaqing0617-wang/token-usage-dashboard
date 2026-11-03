@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Token 用量看板",
+    "description": "在界面底部常驻显示今日与累计 Token、估算费用、账户余额，以及已接入的 API 和模型。"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "DSH Official Usage Bridge",
+  "version": "1.0.0",
+  "description": "Forwards the signed-in DeepSeek Platform usage ledger to the local DSH Token Usage Dashboard. No data leaves this machine.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://platform.deepseek.com/*",
+    "http://127.0.0.1:17654/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://platform.deepseek.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

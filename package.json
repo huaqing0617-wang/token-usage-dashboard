@@ -1,0 +1,52 @@
+{
+  "name": "@huaqing/dsh-token-usage-dashboard",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Always-on Token usage, spend, balance, API, and model dashboard for DeepSeek Harness.",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "pricing.js",
+    "usage.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "bridge.js",
+    "edge-bridge/manifest.json",
+    "edge-bridge/content.js",
+    "edge-bridge/icon.svg",
+    "edge-bridge/README.md",
+    "edge-bridge/icon16.png",
+    "edge-bridge/icon48.png",
+    "edge-bridge/icon128.png",
+    "LICENSE",
+    ".gitignore"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/huaqing0617-wang/token-usage-dashboard.git"
+  },
+  "homepage": "https://github.com/huaqing0617-wang/token-usage-dashboard",
+  "bugs": {
+    "url": "https://github.com/huaqing0617-wang/token-usage-dashboard/issues"
+  }
+}
