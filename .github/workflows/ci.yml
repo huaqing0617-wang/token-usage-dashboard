@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Syntax check
+        run: |
+          node --check index.js
+          node --check client.js
+          node --check usage.js
+          node --check pricing.js
+          node --check bridge.js
+          node --check edge-bridge/content.js
+      - name: Smoke tests
+        run: |
+          node test/bridge.test.mjs
+          node test/extension-smoke.mjs
+          node test/client-smoke.mjs
