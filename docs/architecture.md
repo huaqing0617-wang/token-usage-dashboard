@@ -7,7 +7,7 @@ and are intentionally not merged into one number:
 
 | Plane | Source | Scope | Currency |
 |---|---|---|---|
-| Official | DeepSeek Platform private usage endpoints, fetched inside the signed-in Edge page | All API keys and devices on the account | Platform currency, normally CNY |
+| Official | DeepSeek Platform private usage endpoints, fetched inside the signed-in Edge page | All API keys on the account; usage may originate from any device | Platform currency, normally CNY |
 | Local | DSH durable Session logs on this machine | This DSH profile only | USD estimate at published list prices |
 
 The footer prefers the official plane when the bridge snapshot is fresh. Local

@@ -11,9 +11,9 @@ Official and local DeepSeek usage, spend, balance, API keys, and models in a per
 Token Usage Dashboard adds a full-width status bar to DeepSeek Harness and keeps
 two independent accounts of model usage:
 
-- **Official Platform** — the DeepSeek Platform ledger across every API key and
-  device on the account, including request counts, spend, balance, per-key
-  usage, and model totals.
+- **Official Platform** — the account-wide DeepSeek Platform ledger across all
+  API keys, including request counts, spend, balance, per-key usage, and model
+  totals. Platform data is account-scoped; it does not expose a device identity.
 - **Local DSH** — this machine's durable Session logs and a USD list-price
   estimate, including the local provider and model registry.
 
