@@ -1,7 +1,5 @@
 # Token Usage Dashboard
 
-[![CI](https://github.com/huaqing0617-wang/token-usage-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/huaqing0617-wang/token-usage-dashboard/actions/workflows/ci.yml)
-
 A persistent DeepSeek Harness UI plugin with two data planes:
 
 - **Official DeepSeek Platform** — every API key on the account, every device,
