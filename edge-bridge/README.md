@@ -33,5 +33,5 @@ The extension fetches:
 ## Remove
 
 Disable or remove the extension in `edge://extensions`; the DSH dashboard falls
-back to local-only stats. The extension stores only a small monthly cache in
+back to local-only stats. The extension stores only a small per-window cache in
 `chrome.storage.local`; no token is written by this extension.

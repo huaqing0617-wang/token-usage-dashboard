@@ -20,7 +20,7 @@ plugin cannot pass that challenge from a saved token; the browser page can.
 - **详情** expands an in-flow panel with:
   - official today/all-time cards, request counts, balance, API key count, and
     all-time model usage;
-  - per-API-key usage for the last 30 days;
+  - per-API-key usage aggregated over all time;
   - the local DSH today/lifetime breakdown and its provider/model registry.
 - **常驻** hides the full bar and leaves a compact bottom-right pill; the choice
   persists in `localStorage`.
@@ -101,7 +101,7 @@ the bar uses local DSH values. The local plane is never removed.
 
 - Official values are the Platform account ledger across **all API keys**, not
   just DSH. The current 30-day Platform page may show fewer or more rows than
-  the all-time monthly aggregation because the page's range control is 30 days.
+  the all-time window aggregation because the page's range control is 30 days.
 - Per-key rows and all-time totals come from the same consecutive 30-day
   windows and cover the full scan range.
 - Local spend is a USD estimate at DeepSeek list prices and excludes
@@ -145,7 +145,7 @@ the bar uses local DSH values. The local plane is never removed.
 | `pricing.js` | Local USD estimate, peak/off-peak rule, holiday table |
 | `bridge.js` | Loopback ingest server for the browser bridge |
 | `edge-bridge/` | Manifest V3 Edge extension (content script) |
-| `edge-bridge/content.js` | All-time monthly Platform scan, current 30-day key usage, balance, POST to bridge |
+| `edge-bridge/content.js` | All-time 30-day window scan, current key usage, balance, POST to bridge |
 | `test/` | Client, extension, and bridge smoke tests |
 
 ## Sources
